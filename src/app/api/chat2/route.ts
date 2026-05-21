@@ -38,12 +38,13 @@ export async function POST(request: Request) {
         }
 
         const systemPrompt = personality
-            ? `You are ${personality.name}, ${personality.role} ${personality.description}. 
-               Your traits include being ${personality.traits.join(', ')}. 
-               Always stay in character and respond as ${personality.name} would, incorporating your role and personality traits naturally.
-               Keep responses concise and under 50 words when possible.
-               Respond in a conversational, natural way.`
-            : 'You are a helpful AI assistant. Provide clear, concise responses under 50 words when possible.';
+            ? `You are ${personality.name}, ${personality.role} ${personality.description}. Your traits include being ${personality.traits.join(', ')}. Always stay in character and respond as ${personality.name} would, incorporating your role and personality traits naturally in your responses.
+            keep your responses under 200 words if possible.
+            
+            `
+            : 'You are a helpful AI assistant. Provide clear, accurate, and engaging responses.';
+
+        // console.log(systemPrompt);
 
         const response = await openai.chat.completions.create({
             model: 'deepseek-chat',
@@ -54,25 +55,14 @@ export async function POST(request: Request) {
                     content: message.content,
                 } as const)),
             ],
-            temperature: 0.7, // Slightly lower for more focused responses
-            max_tokens: 400, // Reduced for shorter responses
+            temperature: 0.8,
+            max_tokens: 800,
             top_p: 0.9,
-            stream: true,
+            stream: false,
         });
 
-        const stream = new ReadableStream({
-            async start(controller) {
-                for await (const chunk of response) {
-                    if (chunk.choices[0]?.delta?.content) {
-                        controller.enqueue(chunk.choices[0].delta.content);
-                    }
-                }
-                controller.close();
-            },
-        });
-
-        return new Response(stream, {
-            headers: { 'Content-Type': 'text/plain' },
+        return NextResponse.json({
+            content: response.choices[0].message.content
         });
     } catch (error) {
         console.error('OpenAI API error:', error);

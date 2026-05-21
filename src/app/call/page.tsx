@@ -41,7 +41,7 @@ function CallContent() {
 
     const handleSpeechResult = async (text: string) => {
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/api/chat2', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
